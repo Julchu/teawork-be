@@ -1,5 +1,5 @@
 import { type Response, type Router, Router as createRouter } from "express";
-import type { AuthRequest } from "../../types/index.ts";
+import type { AuthRequest } from "../../types";
 import {
   deleteCafe,
   getCafe,
@@ -48,9 +48,9 @@ cafeRouter.get("/", async (req: AuthRequest, res: Response) => {
 
   try {
     const cafes = await listCafes(req.userId, {
-    near,
-    submitted: parsed.data.submitted,
-  });
+      near,
+      submitted: parsed.data.submitted,
+    });
     res.json({ success: true, data: cafes });
   } catch (error) {
     console.error("Failed to list cafes", error);

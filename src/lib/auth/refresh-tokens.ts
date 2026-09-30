@@ -1,5 +1,5 @@
 import { and, eq, gt } from "drizzle-orm";
-import { db } from "../../db/index.ts";
+import { db } from "../../db";
 import { refreshTokenTable } from "../../db/schemas/refresh-token.schema.ts";
 
 export const storeRefreshToken = async ({

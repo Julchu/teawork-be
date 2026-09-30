@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
@@ -11,7 +11,7 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { BathroomLockValues, LocationValues } from "../../types/index.ts";
+import { BathroomLockValues, LocationValues } from "../../types";
 import { requiredColumns, timestamps } from "../utils/shared-schema.ts";
 import { userTable } from "./user.schema.ts";
 

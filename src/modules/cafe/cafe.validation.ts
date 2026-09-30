@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BathroomLockValues, type CafeInput, LocationValues } from "../../types/index.ts";
+import { BathroomLockValues, type CafeInput, LocationValues } from "../../types";
 
 const coordinatesSchema = z.object({
   lat: z.number().gte(-90).lte(90),

@@ -3,7 +3,6 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import rateLimit from "express-rate-limit";
 import createError, { type HttpError } from "http-errors";
 import logger from "morgan";
-import path from "path";
 import { userSetter } from "./lib/auth/auth-handlers.ts";
 import { cafeRouter } from "./modules/cafe/cafe.routes.ts";
 import { geoRouter } from "./modules/geo/geo.routes.ts";
@@ -18,14 +17,10 @@ if (trustProxy === "true") {
   app.set("trust proxy", Number(trustProxy));
 }
 
-const __dirname = import.meta.dirname;
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -66,8 +61,7 @@ app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  res.status(err.status || 500);
-  res.render("error");
+  res.status(err.status || 500).json({ message: err.message });
 });
 
 export default app;

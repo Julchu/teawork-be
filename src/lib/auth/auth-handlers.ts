@@ -2,7 +2,7 @@ import type { NextFunction, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { errors as joseErrors, jwtVerify, SignJWT } from "jose";
 import { getUserByEmail, insertUser } from "../../modules/user/user.service.ts";
-import type { AuthRequest } from "../../types/index.ts";
+import type { AuthRequest } from "../../types";
 import {
   refreshTokenIsCurrent,
   revokeUserRefreshTokens,

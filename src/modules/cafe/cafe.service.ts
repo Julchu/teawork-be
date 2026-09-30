@@ -1,8 +1,8 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
-import { db } from "../../db/index.ts";
+import { db } from "../../db";
 import { cafeTable, type SelectCafe } from "../../db/schemas/cafe.schema.ts";
 import { userFavoriteCafeTable } from "../../db/schemas/user-favorite-cafe.schema.ts";
-import type { CafeInput, Coordinates, SavedCafe } from "../../types/index.ts";
+import type { CafeInput, Coordinates, SavedCafe } from "../../types";
 import {
   boundingBox,
   CAFE_MATCH_RADIUS_METERS,
@@ -113,11 +113,13 @@ const withFavorite = (rows: CafeWithFavorites[]) =>
 const findCafeRow = async (publicId: string, userId: number) => {
   try {
     return await db.query.cafeTable.findFirst({
-      where: (cafe, operators) =>
-        and(operators.eq(cafe.publicId, publicId), operators.isNull(cafe.deletedAt)),
+      where: {
+        publicId,
+        deletedAt: { isNull: true },
+      },
       with: {
         favorites: {
-          where: (favorite, operators) => operators.eq(favorite.userId, userId),
+          where: { userId },
           limit: 1,
           columns: { id: true },
         },
@@ -132,36 +134,28 @@ export const listCafes = async (userId: number, query: CafeQuery = {}) => {
   try {
     const box = query.near ? boundingBox(query.near, query.near.radiusMeters) : undefined;
     const rows = await db.query.cafeTable.findMany({
-      where: (cafe, operators) => {
-        const filters = [operators.isNull(cafe.deletedAt)];
-        if (query.submitted) {
-          const mine = operators.or(
-            operators.eq(cafe.createdByUserId, userId),
-            operators.eq(cafe.updatedByUserId, userId),
-          );
-          if (mine) filters.push(mine);
-        }
-        if (box) {
-          filters.push(
-            operators.gte(cafe.latitude, box.minLat),
-            operators.lte(cafe.latitude, box.maxLat),
-            operators.gte(cafe.longitude, box.minLng),
-            operators.lte(cafe.longitude, box.maxLng),
-          );
-        }
-        return and(...filters);
+      where: {
+        deletedAt: { isNull: true },
+        ...(query.submitted
+          ? {
+              OR: [{ createdByUserId: userId }, { updatedByUserId: userId }],
+            }
+          : {}),
+        ...(box
+          ? {
+              latitude: { gte: box.minLat, lte: box.maxLat },
+              longitude: { gte: box.minLng, lte: box.maxLng },
+            }
+          : {}),
       },
       with: {
         favorites: {
-          where: (favorite, operators) => operators.eq(favorite.userId, userId),
+          where: { userId },
           limit: 1,
           columns: { id: true },
         },
       },
-      orderBy: (cafe, operators) => [
-        operators.desc(cafe.updatedAt),
-        operators.desc(cafe.createdAt),
-      ],
+      orderBy: { updatedAt: "desc", createdAt: "desc" },
     });
 
     const near = query.near;
@@ -187,9 +181,9 @@ export const getCafe = async (userId: number, publicId: string) => {
 export const listFavoriteCafes = async (userId: number) => {
   try {
     const rows = await db.query.userFavoriteCafeTable.findMany({
-      where: (favorite, operators) => operators.eq(favorite.userId, userId),
+      where: { userId },
       with: { cafe: true },
-      orderBy: (favorite, operators) => [operators.desc(favorite.createdAt)],
+      orderBy: { createdAt: "desc" },
     });
 
     return rows
@@ -236,8 +230,10 @@ export const saveCafe = async (
   try {
     const existing = publicId
       ? await db.query.cafeTable.findFirst({
-          where: (cafe, operators) =>
-            and(operators.eq(cafe.publicId, publicId), operators.isNull(cafe.deletedAt)),
+          where: {
+            publicId,
+            deletedAt: { isNull: true },
+          },
         })
       : await findMatchingCafe(input);
 
